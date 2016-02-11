@@ -12,15 +12,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FsWatcher {
 
-    private Path dir;
     private WatchService watcher;
     private List<Observer> observers;
     private ConcurrentHashMap<WatchKey, Path> keys;
 
     public FsWatcher(Path path) throws IOException {
-        this.dir = path;
+        watcher = FileSystems.getDefault().newWatchService();
         observers = new ArrayList<Observer>();
         keys = new ConcurrentHashMap<WatchKey, Path>();
+        registerAll(path);
     }
 
     public void addObserver(Observer observer){
@@ -54,9 +54,6 @@ public class FsWatcher {
     }
 
     public void watch() throws IOException {
-        watcher = FileSystems.getDefault().newWatchService();
-        register(dir);
-        registerAll(dir);
         WatchKey key = null;
 
         while(key == null || key.reset()){
@@ -88,12 +85,12 @@ public class FsWatcher {
         }
     }
 
-    private void register(Path path) throws IOException {
+    public void register(Path path) throws IOException {
         WatchKey key = path.register(watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
         keys.put(key, path);
     }
 
-    private void registerAll(final Path path) throws IOException {
+    public void registerAll(final Path path) throws IOException {
         Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
 
             @Override
